@@ -12,7 +12,7 @@ function startSearch() {
           type: 'list',
           name: 'initialChoice',
           message: 'What would you like to do?',
-          choices: ['View All Departments', 'View All Roles', 'View All Employees', 'Add a Department', 'Add a Role', 'Add an Employee', 'Update an Employee Role'],
+          choices: ['View All Departments', 'View All Roles', 'View All Employees', 'Add a Department', 'Add a Role', 'Add an Employee', 'Update an Employee Role', 'Exit the program'],
         }
     ])
     .then(nextSteps => {
@@ -32,11 +32,14 @@ function startSearch() {
           case 'Add a Role': // done
               addRole();
               break;
-          case 'Add an Employee':
+          case 'Add an Employee': // done
               addEmployee();
               break;
           case 'Update an Employee Role':
               updateEmployeeRole();
+              break;
+          case 'Exit the program':
+              quit();
               break;
       }
     });
@@ -61,8 +64,9 @@ function viewAllDepartments() {
 function viewAllRoles() {
   db.query(
     `SELECT role.title, role.salary, role.department_id AS dept_id, department.name AS name_of_dept
-     FROM role
-     LEFT JOIN department ON department.id = role.department_id;`,
+     FROM role 
+     LEFT JOIN department ON department.id = role.department_id
+     ORDER BY department_id;`,
     function(err, res) {
       console.log("\n");
       console.table(res);  // results contains rows returned by server
@@ -186,15 +190,92 @@ function addRole() {
           startSearch();
         }
       );
-    });
-VALUES
-  
+    });  
 }
 
 /* WHEN I choose to add an employee
 THEN I am prompted to enter the employee’s first name, last name, role, and manager and that employee is added to the database */
 function addEmployee() {
+  // allow user to search through existing roles
+  let roles = [];
+    db.query(`SELECT * FROM role`, (err, rows) => {
+      if (err) throw err;
+          //console.table(rows);  // results contains rows returned by server
+      for (let i = 0; i < rows.length; i++) {
+        roles.push({ name: rows[i].title, value: rows[i].id });
+      }
+      // console.log("\n");
+      // console.table(roles);
+    });
+  // allow user to search through existing roles
+  let managers = [];
+    db.query(`SELECT CONCAT_WS(' ',employee.first_name,employee.last_name) AS manager, employee.id AS manager_id FROM employee`, (err, rows) => {
+      if (err) throw err;
+          //console.table(rows);  // results contains rows returned by server
+      for (let i = 0; i < rows.length; i++) {
+        managers.push({ name: rows[i].manager, value: rows[i].manager_id });
+      }
+      // console.log("\n");
+      // console.table(managers);
+    });
 
+  return inquirer.prompt([
+    {
+      type: 'input',
+      name: 'firstName',
+      message: "What is the first name of the employee you would like to add?",
+      // data validation
+      validate: firstNameInput => {
+        if (firstNameInput) {
+          return true;
+        } else {
+          console.log('Please enter a valid first name');
+          return false;
+        }
+      }
+    },
+    {
+      type: 'input',
+      name: 'lastName',
+      message: "What is the last name of the employee you would like to add?",
+      // data validation
+      validate: lastNameInput => {
+        if (lastNameInput) {
+          return true;
+        } else {
+          console.log('Please enter a valid last name');
+          return false;
+        }
+      }
+    },
+    {
+      type: 'rawlist',
+      name: 'roleName',
+      message: "Please select a role for this employee",
+      choices: roles
+    },
+    {
+      type: 'list',
+      name: 'managerName',
+      message: "Please select a manager for this employee",
+      choices: managers
+    }
+  ])
+    // push new employee into employee db
+    .then(function(res){
+      // INSERT INTO role (title, salary, department_name)
+      const sql = `INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)`;
+      const params = [res.firstName, res.lastName, res.roleName, res.managerName];
+      // console.log(res);
+      db.query(sql, params, (err, row) => {
+          if (err) throw err; 
+          console.log("\n");
+          console.log("Employee has been added");
+          // console.table(res);  // results contains rows returned by server
+          startSearch();
+        }
+      );
+    });  
 }
 
 startSearch();
