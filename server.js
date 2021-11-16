@@ -3,16 +3,8 @@ const inquirer = require('inquirer');
 // npm install console.table --save
 const cTable = require('console.table');
 
-// do fun header thing with console.table
-console.table([
-  {
-    name: 'foo',
-    age: 10
-  }, {
-    name: 'bar',
-    age: 20
-  }
-]);
+// constructor
+const Employee = require('./lib/Employee');
 
 function startSearch() {
   return inquirer.prompt([
@@ -25,19 +17,19 @@ function startSearch() {
     ])
     .then(nextSteps => {
       switch(nextSteps.initialChoice) {
-          case 'View All Departments':
-              viewAllDepartments();
+          case 'View All Departments': // done
+              viewAllDepartments(); 
               break;
-          case 'View All Roles':
+          case 'View All Roles': // done
               viewAllRoles();
               break;
-          case 'View All Employees':
+          case 'View All Employees': // done
               viewAllEmployees();
               break;
-          case 'Add a Department':
+          case 'Add a Department': // done
               addDepartment();
               break;
-          case 'Add a Role':
+          case 'Add a Role': // done
               addRole();
               break;
           case 'Add an Employee':
@@ -126,6 +118,83 @@ function addDepartment() {
         }
       );
     });  
+}
+
+/* WHEN I choose to add a role
+THEN I am prompted to enter the name, salary, and department for the role and that role is added to the database */
+function addRole() {
+  // need to allow user to search through existing departments
+  let departments = [];
+
+    db.query(`SELECT * FROM department`, (err, rows) => {
+      if (err) throw err;
+          //console.table(rows);  // results contains rows returned by server
+      for (let i = 0; i < rows.length; i++) {
+          departments.push({ name: rows[i].name, value: rows[i].id });
+      }
+      //console.log("\n");
+      //console.table(departments);
+    });
+
+  return inquirer.prompt([
+    {
+      type: 'input',
+      name: 'roleName',
+      message: "What is the name of the role you would like to add?",
+      // data validation
+      validate: roleNameInput => {
+        if (roleNameInput) {
+          return true;
+        } else {
+          console.log('Please enter a valid role name');
+          return false;
+        }
+      }
+    },
+    {
+      type: 'input',
+      name: 'salary',
+      message: "What is the salary for this role? (no commas, please)",
+      // data validation
+      validate: salaryInput => {
+        if (salaryInput) {
+          return true;
+        } else {
+          console.log('Please enter a valid salary amount - e: 100000');
+          return false;
+        }
+      }
+    },
+    {
+      type: 'rawlist',
+      name: 'deptName',
+      message: "Please select a department for this role",
+      choices: departments
+    }
+  ])
+    // push new role into role db
+    .then(function(res){
+      // INSERT INTO role (title, salary, department_name)
+      const sql = `INSERT INTO role (title, salary, department_id) VALUES (?, ?, ?)`;
+      const params = [res.roleName, res.salary, res.deptName];
+      console.log(res);
+      db.query(sql, params, (err, row) => {
+          if (err) throw err; 
+          console.log("\n");
+          console.log("Department has been added");
+          console.table(res);  // results contains rows returned by server
+          startSearch();
+        }
+      );
+    });
+VALUES
+  
+}
+
+/* WHEN I choose to add an employee
+THEN I am prompted to enter the employee’s first name, last name, role, and manager and that employee is added to the database */
+function addEmployee() {
+
 }
 
 startSearch();
