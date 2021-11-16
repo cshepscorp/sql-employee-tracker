@@ -9,7 +9,7 @@ function startSearch() {
           type: 'list',
           name: 'initialChoice',
           message: 'What would you like to do?',
-          choices: ['View All Departments', 'View All Roles', 'View All Employees', 'Add a Department', 'Add a Role', 'Add an Employee', 'Update an Employee Role', 'Exit the program'],
+          choices: ['View All Departments', 'View All Roles', 'View All Employees', 'Add a Department', 'Add a Role', 'Add an Employee', 'Update an Employee Role', 'Delete an Employee', 'Exit the program'],
         }
     ])
     .then(nextSteps => {
@@ -34,6 +34,9 @@ function startSearch() {
               break;
           case 'Update an Employee Role':  // done
               updateEmployeeRole();
+              break;
+          case 'Delete an Employee': 
+              deleteEmployee();
               break;
           case 'Exit the program':
               quit();
@@ -260,7 +263,7 @@ function addEmployee() {
 
 // select an employee to update and their new role and this information is updated in the database 
 function updateEmployeeRole() {
-    // allow user to search through existing employes
+    // allow user to search through existing employees
     let employees = [];
     db.query(`SELECT CONCAT_WS(' ',employee.first_name,employee.last_name) AS employee, employee.id AS employee_id FROM employee`, (err, rows) => {
       if (err) throw err;
@@ -312,8 +315,55 @@ function updateEmployeeRole() {
     });
 }
 
+function deleteEmployee() {
+     // allow user to search through existing employes
+     let employees = [];
+     db.query(`SELECT CONCAT_WS(' ',employee.first_name,employee.last_name) AS employee, employee.id AS employee_id FROM employee`, (err, rows) => {
+       if (err) throw err;
+       for (let i = 0; i < rows.length; i++) {
+         employees.push({ name: rows[i].employee, value: rows[i].employee_id });
+       }
+     });
+   // allow user to search through existing roles
+   let roles = [];
+     db.query(`SELECT * FROM role`, (err, rows) => {
+       if (err) throw err;
+       for (let i = 0; i < rows.length; i++) {
+         roles.push({ name: rows[i].title, value: rows[i].id });
+       }
+     });
+ 
+   return inquirer.prompt([
+     {
+       type: 'confirm',
+         name: 'confirmDeleteEmployee',
+         message: 'Are you sure you would like to delete an employee?',
+         default: true
+     },
+     {
+       type: 'list',
+       name: 'employeeName',
+       message: "Please select an employee to delete",
+       choices: employees
+     }
+   ])
+     .then(function(res){
+       // DELETE employee record based on employee_id
+       const sql = `DELETE FROM employee WHERE id = ?`;
+       const params = [res.employeeName];
+       db.query(sql, params, (err, row) => {
+           if (err) throw err; 
+           console.log("\n");
+           console.log("Employee has been deleted");
+           startSearch();
+         }
+       );
+     });
+}
+
 function quit() {
   process.exit();
 }
+
 startSearch();
 

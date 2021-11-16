@@ -13,4 +13,6 @@ const db = mysql.createConnection( // connect the application to the MySQL datab
     console.log('Connected to the employees database.')
   );
 
+  
+  
   module.exports = db; // so we can use elsewhere
