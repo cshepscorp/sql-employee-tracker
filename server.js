@@ -35,7 +35,7 @@ function startSearch() {
           case 'Add an Employee': // done
               addEmployee();
               break;
-          case 'Update an Employee Role':
+          case 'Update an Employee Role':  // done
               updateEmployeeRole();
               break;
           case 'Exit the program':
@@ -249,7 +249,7 @@ function addEmployee() {
       }
     },
     {
-      type: 'rawlist',
+      type: 'list',
       name: 'roleName',
       message: "Please select a role for this employee",
       choices: roles
@@ -278,20 +278,68 @@ function addEmployee() {
     });  
 }
 
+// select an employee to update and their new role and this information is updated in the database 
+function updateEmployeeRole() {
+    // allow user to search through existing roles
+    let employees = [];
+    db.query(`SELECT CONCAT_WS(' ',employee.first_name,employee.last_name) AS employee, employee.id AS employee_id FROM employee`, (err, rows) => {
+      if (err) throw err;
+        //console.table(rows);  // results contains rows returned by server
+      for (let i = 0; i < rows.length; i++) {
+        employees.push({ name: rows[i].employee, value: rows[i].employee_id });
+      }
+      // console.log("\n");
+      // console.table(employees);
+    });
+  // allow user to search through existing roles
+  let roles = [];
+    db.query(`SELECT * FROM role`, (err, rows) => {
+      if (err) throw err;
+        //console.table(rows);  // results contains rows returned by server
+      for (let i = 0; i < rows.length; i++) {
+        roles.push({ name: rows[i].title, value: rows[i].id });
+      }
+      // console.log("\n");
+      // console.table(roles);
+    });
+
+
+  return inquirer.prompt([
+    {
+      type: 'confirm',
+        name: 'confirmUpdateEmployee',
+        message: 'Would you like to update an employee role?',
+        default: true
+    },
+    {
+      type: 'list',
+      name: 'employeeName',
+      message: "Please select an employee to update",
+      choices: employees
+    },
+    {
+      type: 'list',
+      name: 'roleName',
+      message: "Please select a new role for this employee",
+      choices: roles
+    }
+  ])
+    // push new employee into employee db
+    .then(function(res){
+      // UPDATE role based on employee_id
+      const sql = `UPDATE employee SET role_id = ? WHERE id = ?`;
+      const params = [res.roleName, res.employeeName];
+      // console.log(res);
+      db.query(sql, params, (err, row) => {
+          if (err) throw err; 
+          console.log("\n");
+          console.log("Employee has been updated");
+          // console.table(res);  // results contains rows returned by server
+          startSearch();
+        }
+      );
+    });
+}
+
 startSearch();
-
-// import routes
-// const apiRoutes = require('./routes/apiRoutes'); // Remember that you don't have to specify index.js in the path (e.g., ./routes/apiRoutes/index.js). If the directory has an index.js file in it, Node.js will automatically look for it when requiring the directory.
-
-// // add Express middleware
-// app.use(express.urlencoded({ extended: false }));
-// app.use(express.json());
-// // Add after Express middleware
-// app.use('/api', apiRoutes); // By adding the /api prefix here, we can remove it from the individual route expressions after we move them to their new home.
-
-
-// // Default response for any other request (Not Found)
-// app.use((req, res) => {
-//     res.status(404).end();
-//   });
 
