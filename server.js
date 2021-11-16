@@ -3,9 +3,6 @@ const inquirer = require('inquirer');
 // npm install console.table --save
 const cTable = require('console.table');
 
-// constructor
-const Employee = require('./lib/Employee');
-
 function startSearch() {
   return inquirer.prompt([
       {
@@ -46,8 +43,7 @@ function startSearch() {
 
 };
 
-// WHEN I choose to view all departments
-// THEN I am presented with a formatted table showing department names and department ids
+// user presented with a formatted table showing department names and department ids
 function viewAllDepartments() {
   db.query(
     `SELECT * FROM department`,
@@ -59,8 +55,7 @@ function viewAllDepartments() {
   );
 }
 
-// WHEN I choose to view all roles
-// THEN I am presented with the job title, role id, the department that role belongs to, and the salary for that role
+// user presented with the job title, role id, the department that role belongs to, and the salary for that role
 function viewAllRoles() {
   db.query(
     `SELECT role.title, role.salary, role.department_id AS dept_id, department.name AS name_of_dept
@@ -89,8 +84,8 @@ function viewAllEmployees() {
       }
     );
 }
-// WHEN I choose to add a department
-// THEN I am prompted to enter the name of the department and that department is added to the database
+
+// user prompted to enter the name of the department and that department is added to the database
 function addDepartment() {
   
   return inquirer.prompt([
@@ -124,20 +119,16 @@ function addDepartment() {
     });  
 }
 
-/* WHEN I choose to add a role
-THEN I am prompted to enter the name, salary, and department for the role and that role is added to the database */
+/* user prompted to enter the name, salary, and department for the role and that role is added to the database */
 function addRole() {
   // need to allow user to search through existing departments
   let departments = [];
 
     db.query(`SELECT * FROM department`, (err, rows) => {
       if (err) throw err;
-          //console.table(rows);  // results contains rows returned by server
       for (let i = 0; i < rows.length; i++) {
           departments.push({ name: rows[i].name, value: rows[i].id });
       }
-      //console.log("\n");
-      //console.table(departments);
     });
 
   return inquirer.prompt([
@@ -145,7 +136,6 @@ function addRole() {
       type: 'input',
       name: 'roleName',
       message: "What is the name of the role you would like to add?",
-      // data validation
       validate: roleNameInput => {
         if (roleNameInput) {
           return true;
@@ -159,7 +149,6 @@ function addRole() {
       type: 'input',
       name: 'salary',
       message: "What is the salary for this role? (no commas, please)",
-      // data validation
       validate: salaryInput => {
         if (salaryInput) {
           return true;
@@ -193,8 +182,7 @@ function addRole() {
     });  
 }
 
-/* WHEN I choose to add an employee
-THEN I am prompted to enter the employee’s first name, last name, role, and manager and that employee is added to the database */
+/* user prompted to enter the employee’s first name, last name, role, and manager and that employee is added to the database */
 function addEmployee() {
   // allow user to search through existing roles
   let roles = [];
@@ -204,8 +192,6 @@ function addEmployee() {
       for (let i = 0; i < rows.length; i++) {
         roles.push({ name: rows[i].title, value: rows[i].id });
       }
-      // console.log("\n");
-      // console.table(roles);
     });
   // allow user to search through existing roles
   let managers = [];
@@ -215,8 +201,6 @@ function addEmployee() {
       for (let i = 0; i < rows.length; i++) {
         managers.push({ name: rows[i].manager, value: rows[i].manager_id });
       }
-      // console.log("\n");
-      // console.table(managers);
     });
 
   return inquirer.prompt([
@@ -224,7 +208,6 @@ function addEmployee() {
       type: 'input',
       name: 'firstName',
       message: "What is the first name of the employee you would like to add?",
-      // data validation
       validate: firstNameInput => {
         if (firstNameInput) {
           return true;
@@ -238,7 +221,6 @@ function addEmployee() {
       type: 'input',
       name: 'lastName',
       message: "What is the last name of the employee you would like to add?",
-      // data validation
       validate: lastNameInput => {
         if (lastNameInput) {
           return true;
@@ -263,15 +245,13 @@ function addEmployee() {
   ])
     // push new employee into employee db
     .then(function(res){
-      // INSERT INTO role (title, salary, department_name)
+      // INSERT INTO role (first_name, last_name, role_id, manager_id)
       const sql = `INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)`;
       const params = [res.firstName, res.lastName, res.roleName, res.managerName];
-      // console.log(res);
       db.query(sql, params, (err, row) => {
           if (err) throw err; 
           console.log("\n");
           console.log("Employee has been added");
-          // console.table(res);  // results contains rows returned by server
           startSearch();
         }
       );
@@ -280,29 +260,22 @@ function addEmployee() {
 
 // select an employee to update and their new role and this information is updated in the database 
 function updateEmployeeRole() {
-    // allow user to search through existing roles
+    // allow user to search through existing employes
     let employees = [];
     db.query(`SELECT CONCAT_WS(' ',employee.first_name,employee.last_name) AS employee, employee.id AS employee_id FROM employee`, (err, rows) => {
       if (err) throw err;
-        //console.table(rows);  // results contains rows returned by server
       for (let i = 0; i < rows.length; i++) {
         employees.push({ name: rows[i].employee, value: rows[i].employee_id });
       }
-      // console.log("\n");
-      // console.table(employees);
     });
   // allow user to search through existing roles
   let roles = [];
     db.query(`SELECT * FROM role`, (err, rows) => {
       if (err) throw err;
-        //console.table(rows);  // results contains rows returned by server
       for (let i = 0; i < rows.length; i++) {
         roles.push({ name: rows[i].title, value: rows[i].id });
       }
-      // console.log("\n");
-      // console.table(roles);
     });
-
 
   return inquirer.prompt([
     {
@@ -324,22 +297,23 @@ function updateEmployeeRole() {
       choices: roles
     }
   ])
-    // push new employee into employee db
+    // push updated employee into employee db
     .then(function(res){
       // UPDATE role based on employee_id
       const sql = `UPDATE employee SET role_id = ? WHERE id = ?`;
       const params = [res.roleName, res.employeeName];
-      // console.log(res);
       db.query(sql, params, (err, row) => {
           if (err) throw err; 
           console.log("\n");
           console.log("Employee has been updated");
-          // console.table(res);  // results contains rows returned by server
           startSearch();
         }
       );
     });
 }
 
+function quit() {
+  process.exit();
+}
 startSearch();
 
