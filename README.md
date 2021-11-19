@@ -15,11 +15,16 @@
 
   <a name="installation"></a>
   ## Installation
-  git clone ...
+  run `git clone https://github.com/cshepscorp/sql-employee-tracker.git` to clone onto your machine
+  run `npm install` to install the appropriate packages for this application 
 
   <a name="usage"></a>
   ## Usage
-  node server.js
+  run `node server.js` to launch the application
+
+  ([Walkthrough video - how to use the application](https://watch.screencastify.com/v/oEjwasOp7xwvdfTpoHzB))
+  
+  ![Screenshot of App](./assets/images/mysql-employee-tracker.jpg)
 
   <a name="license"></a>
   ## License
