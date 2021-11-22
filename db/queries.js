@@ -137,8 +137,8 @@ addRole = async () => {
       type: 'input',
       name: 'roleName',
       message: "What is the name of the role you would like to add?",
-      validate: roleNameInput_1 => {
-        if (roleNameInput_1) {
+      validate: roleNameInput => {
+        if (roleNameInput) {
           return true;
         } else {
           console.log('Please enter a valid role name');
@@ -150,8 +150,8 @@ addRole = async () => {
       type: 'input',
       name: 'salary',
       message: "What is the salary for this role? (no commas, please)",
-      validate: salaryInput_1 => {
-        if (salaryInput_1) {
+      validate: salaryInput => {
+        if (salaryInput) {
           return true;
         } else {
           console.log('Please enter a valid salary amount - e: 100000');
@@ -170,11 +170,11 @@ addRole = async () => {
   const sql = `INSERT INTO role (title, salary, department_id) VALUES (?, ?, ?)`;
   const params = [res.roleName, res.salary, res.deptName];
   console.log(res);
-  db.query(sql, params, (err_1, row) => {
-    if (err_1)
-      throw err_1;
+  db.query(sql, params, (err, row) => {
+    if (err)
+      throw err;
     console.log("\n");
-    console.log("Department has been added");
+    console.log("Role has been added");
     console.table(res); // results contains rows returned by server
     startSearch();
   }
